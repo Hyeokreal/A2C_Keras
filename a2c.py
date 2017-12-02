@@ -1,5 +1,5 @@
 import gym
-import time
+import os
 import random
 import numpy as np
 import tensorflow as tf
@@ -16,6 +16,11 @@ from utils import make_atari, wrap_deepmind, discount_with_dones
 
 # global variables for A3C
 MAX_STEP = 80000000
+
+model_path = os.path.join(os.getcwd(), 'save_model')
+
+if not os.path.isdir(model_path):
+    os.mkdir(model_path)
 
 
 class A2CAgent:
@@ -117,29 +122,12 @@ class A2CAgent:
         return train
 
     def load_model(self, name):
-        self.actor.load_weights(name + "_actor.h5")
-        self.critic.load_weights(name + "_critic.h5")
+        self.actor.load_weights(os.path.join(model_path, name + "_actor.h5"))
+        self.critic.load_weights(os.path.join(model_path, name + "_critic.h5"))
 
     def save_model(self, name):
-        self.actor.save_weights(name + "_actor.h5")
-        self.critic.save_weights(name + '_critic.h5')
-
-    # make summary operators for tensorboard
-    def setup_summary(self):
-        episode_total_reward = tf.Variable(0.)
-        episode_avg_max_q = tf.Variable(0.)
-        episode_duration = tf.Variable(0.)
-
-        tf.summary.scalar('Total Reward/Episode', episode_total_reward)
-        tf.summary.scalar('Average Max Prob/Episode', episode_avg_max_q)
-        tf.summary.scalar('Duration/Episode', episode_duration)
-
-        summary_vars = [episode_total_reward, episode_avg_max_q, episode_duration]
-        summary_placeholders = [tf.placeholder(tf.float32) for _ in range(len(summary_vars))]
-        update_ops = [summary_vars[i].assign(summary_placeholders[i]) for i in
-                      range(len(summary_vars))]
-        summary_op = tf.summary.merge_all()
-        return summary_placeholders, update_ops, summary_op
+        self.actor.save_weights(os.path.join(model_path, name + "_actor.h5"))
+        self.critic.save_weights(os.path.join(model_path, name + "_critic.h5"))
 
 
 class Runner(object):
@@ -264,18 +252,21 @@ def pre_processing(observe):
 
 
 if __name__ == "__main__":
-    env = SubprocVecEnv([make_env(i) for i in range(10)])
+    num_proc = 8
+    env = SubprocVecEnv([make_env(i) for i in range(num_proc)])
     test_env = gym.make('BreakoutDeterministic-v4')
     # test_env = SubprocVecEnv([make_env(i) for i in range(1)])
     runner = Runner(env)
     agent = A2CAgent(action_size=4)
 
-    for i in range(MAX_STEP):
+    for i in range(MAX_STEP//num_proc):
         s, a, v, r = runner.run()
         agent.train_model(s, a, r, v)
         runner.update_step_model(agent.actor.get_weights(), agent.critic.get_weights())
 
         if i % 500 == 0:
+            model_name = str(i) + 'th_model'
+            agent.save_model(model_name)
 
             scores = []
             for e in range(5):
@@ -304,5 +295,3 @@ if __name__ == "__main__":
                         scores.append(score)
                         break
             print("%d th iteration, mean score : %f " % (i, np.mean(scores)))
-
-
