@@ -4,7 +4,7 @@ import random
 import numpy as np
 import tensorflow as tf
 from keras.models import Model
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 from keras.layers import Dense, Flatten, Input
 from keras.layers.convolutional import Conv2D
 from keras import backend as K
@@ -99,7 +99,8 @@ class A2CAgent:
         entropy = K.sum(entropy)
 
         loss = actor_loss + 0.01 * entropy
-        optimizer = RMSprop(lr=self.actor_lr, rho=0.99, epsilon=0.01)
+        # optimizer = RMSprop(lr=self.actor_lr, rho=0.99, epsilon=0.01)
+        optimizer = Adam(lr=agent.actor_lr)
         updates = optimizer.get_updates(self.actor.trainable_weights, [], loss)
         train = K.function([self.actor.input, action, advantages], [loss], updates=updates)
 
@@ -113,7 +114,8 @@ class A2CAgent:
 
         loss = K.mean(K.square(discounted_reward - value))
 
-        optimizer = RMSprop(lr=self.critic_lr, rho=0.99, epsilon=0.01)
+        # optimizer = RMSprop(lr=self.critic_lr, rho=0.99, epsilon=0.01)
+        optimizer = Adam(lr=agent.critic_lr)
         updates = optimizer.get_updates(self.critic.trainable_weights, [], loss)
         train = K.function([self.critic.input, discounted_reward], [loss], updates=updates)
         return train
@@ -146,10 +148,11 @@ class Runner(object):
 
     def build_step_model(self):
         input = Input(shape=self.state_size)
-        conv = Conv2D(16, (8, 8), strides=(4, 4), activation='relu')(input)
-        conv = Conv2D(32, (4, 4), strides=(2, 2), activation='relu')(conv)
+        conv = Conv2D(32, (8, 8), strides=(4, 4), activation='relu')(input)
+        conv = Conv2D(64, (4, 4), strides=(2, 2), activation='relu')(conv)
+        conv = Conv2D(64, (3, 3), strides=(1, 1), activation='relu')(conv)
         conv = Flatten()(conv)
-        fc = Dense(256, activation='relu')(conv)
+        fc = Dense(512, activation='relu')(conv)
         policy = Dense(self.action_size, activation='softmax')(fc)
         value = Dense(1, activation='linear')(fc)
 
