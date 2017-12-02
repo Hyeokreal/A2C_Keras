@@ -100,7 +100,7 @@ class A2CAgent:
 
         loss = actor_loss + 0.01 * entropy
         # optimizer = RMSprop(lr=self.actor_lr, rho=0.99, epsilon=0.01)
-        optimizer = Adam(lr=agent.actor_lr)
+        optimizer = Adam(lr=self.actor_lr)
         updates = optimizer.get_updates(self.actor.trainable_weights, [], loss)
         train = K.function([self.actor.input, action, advantages], [loss], updates=updates)
 
@@ -115,7 +115,7 @@ class A2CAgent:
         loss = K.mean(K.square(discounted_reward - value))
 
         # optimizer = RMSprop(lr=self.critic_lr, rho=0.99, epsilon=0.01)
-        optimizer = Adam(lr=agent.critic_lr)
+        optimizer = Adam(lr=self.critic_lr)
         updates = optimizer.get_updates(self.critic.trainable_weights, [], loss)
         train = K.function([self.critic.input, discounted_reward], [loss], updates=updates)
         return train
