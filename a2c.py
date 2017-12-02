@@ -46,9 +46,6 @@ class A2CAgent:
         K.set_session(self.sess)
         self.sess.run(tf.global_variables_initializer())
 
-        self.summary_placeholders, self.update_ops, self.summary_op = self.setup_summary()
-        self.summary_writer = tf.summary.FileWriter('summary/breakout_a3c', self.sess.graph)
-
     # approximate policy and value using Neural Network
     # actor -> state is input and probability of each action is output of network
     # critic -> state is input and value of state is output of network
