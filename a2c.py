@@ -52,10 +52,11 @@ class A2CAgent:
     # actor and critic network share first hidden layer
     def build_model(self):
         input = Input(shape=self.state_size)
-        conv = Conv2D(16, (8, 8), strides=(4, 4), activation='relu')(input)
-        conv = Conv2D(32, (4, 4), strides=(2, 2), activation='relu')(conv)
+        conv = Conv2D(32, (8, 8), strides=(4, 4), activation='relu')(input)
+        conv = Conv2D(64, (4, 4), strides=(2, 2), activation='relu')(conv)
+        conv = Conv2D(64, (3, 3), strides=(1, 1), activation='relu')(conv)
         conv = Flatten()(conv)
-        fc = Dense(256, activation='relu')(conv)
+        fc = Dense(512, activation='relu')(conv)
         policy = Dense(self.action_size, activation='softmax')(fc)
         value = Dense(1, activation='linear')(fc)
 
