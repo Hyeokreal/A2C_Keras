@@ -96,12 +96,13 @@ class A2CAgent:
 
         good_prob = K.sum(action * policy, axis=1)
         eligibility = K.log(good_prob + 1e-10) * advantages
-        actor_loss = -K.sum(eligibility)
+        actor_loss = -K.mean(eligibility)
 
-        entropy = K.sum(policy * K.log(policy + 1e-10), axis=1)
-        entropy = K.sum(entropy)
+        entropy = K.mean(policy * K.log(policy + 1e-10), axis=1)
+        entropy = K.mean(entropy)
 
         loss = actor_loss + 0.01 * entropy
+
         optimizer = RMSprop(lr=self.actor_lr, rho=0.99, epsilon=0.00001, decay=0.99, clipnorm=0.5)
         # optimizer = Adam(lr=self.actor_lr)
         updates = optimizer.get_updates(self.actor.trainable_weights, [], loss)
