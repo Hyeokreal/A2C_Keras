@@ -34,7 +34,7 @@ class A2CAgent:
 
         # optimizer parameters
         self.actor_lr = 0.0001
-        self.critic_lr = 0.0001
+        self.critic_lr = 0.0002
 
         # create model for actor and critic network
         self.actor, self.critic = self.build_model()
@@ -73,6 +73,7 @@ class A2CAgent:
 
     def train_model(self, s, a, r, v):
         a = to_categorical(a, self.action_size)
+        s /= 255.
 
         self.optimizer[0]([s, a, r - v])
         self.optimizer[1]([s, r])
@@ -100,8 +101,8 @@ class A2CAgent:
         entropy = K.sum(entropy)
 
         loss = actor_loss + 0.01 * entropy
-        # optimizer = RMSprop(lr=self.actor_lr, rho=0.99, epsilon=0.01)
-        optimizer = Adam(lr=self.actor_lr)
+        optimizer = RMSprop(lr=self.actor_lr, rho=0.99, epsilon=0.01)
+        # optimizer = Adam(lr=self.actor_lr)
         updates = optimizer.get_updates(self.actor.trainable_weights, [], loss)
         train = K.function([self.actor.input, action, advantages], [loss], updates=updates)
 
@@ -115,8 +116,8 @@ class A2CAgent:
 
         loss = K.mean(K.square(discounted_reward - value))
 
-        # optimizer = RMSprop(lr=self.critic_lr, rho=0.99, epsilon=0.01)
-        optimizer = Adam(lr=self.critic_lr)
+        optimizer = RMSprop(lr=self.critic_lr, rho=0.99, epsilon=0.01)
+        # optimizer = Adam(lr=self.critic_lr)
         updates = optimizer.get_updates(self.critic.trainable_weights, [], loss)
         train = K.function([self.critic.input, discounted_reward], [loss], updates=updates)
         return train
@@ -265,7 +266,7 @@ if __name__ == "__main__":
         agent.train_model(s, a, r, v)
         runner.update_step_model(agent.actor.get_weights(), agent.critic.get_weights())
 
-        if i % 500 == 0:
+        if i % 1000 == 0:
             model_name = str(i) + 'th_model'
             agent.save_model(model_name)
 
@@ -276,7 +277,7 @@ if __name__ == "__main__":
 
                 obs = test_env.reset()
 
-                for _ in range(random.randint(4, 10)):
+                for _ in range(random.randint(1, 30)):
                     observe, _, _, _ = test_env.step(1)
                     observe = pre_processing(observe)
                     stack_obs = np.roll(stack_obs, shift=-1, axis=3)
