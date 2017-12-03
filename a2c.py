@@ -72,8 +72,9 @@ class A2CAgent:
         return actor, critic
 
     def train_model(self, s, a, r, v):
+
         a = to_categorical(a, self.action_size)
-        s /= 255.
+        s = np.float32(s / 255.)
 
         self.optimizer[0]([s, a, r - v])
         self.optimizer[1]([s, r])
